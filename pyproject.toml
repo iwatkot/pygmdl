@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pygmdl"
 version = "1.0.0"
-description = "Download satellite and road images from Google Maps."
+description = "Download satellite images from Google Maps."
 authors = [{name = "iwatkot", email = "iwatkot@gmail.com"}]
 license = {text = "MIT License"}
 readme = "README.md"
-keywords = ["googlemaps", "satellite", "road", "images", "download"]
+keywords = ["googlemaps", "satellite", "images", "download"]
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
