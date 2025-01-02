@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "Pillow",
     "pyproj",
+    "geopy",
 ]
 
 [project.urls]

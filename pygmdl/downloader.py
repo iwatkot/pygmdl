@@ -11,7 +11,7 @@ from math import cos, sin
 from PIL import Image
 
 from pygmdl.config import HEADERS, SAT_URL, TILES_DIRECTORY, Logger
-from pygmdl.converter import calc
+from pygmdl.converter import calc, top_left_from_center
 from pygmdl.gmapper import latlon2xy
 
 Image.MAX_IMAGE_PIXELS = None
@@ -169,25 +169,29 @@ def merge_tiles(
     logger.info("Saved image as %s", output)
 
 
-# pylint: disable=R0917, R0913
 def save_image(
-    top_left_lat: float,
-    top_left_lon: float,
-    rotation: int,
+    lat: float,
+    lon: float,
     size: int,
     output_path: str,
+    rotation: int = 0,
     zoom: int = 18,
+    from_center: bool = False,
     logger: Logger | None = None,
 ) -> str:
-    """Save an image from a given top-left corner, rotation, size, and zoom level.
+    """Save an image from a given coordinates, size, and rotation.
+    By default function expects that the input coordinates are the top-left corner of the image.
+    If you need to provide the center of the image, set from_center to True.
 
     Arguments:
-        top_left_lat (float): Latitude of the top-left corner.
-        top_left_lon (float): Longitude of the top-left corner.
-        rotation (int): Rotation of the image.
+        lat (float): Latitude of the top-left corner.
+        lon (float): Longitude of the top-left corner.
         size (int): Size of the image.
         output_path {str}: Output path.
+        rotation (int, optional): Rotation of the image. Defaults to 0.
         zoom (int, optional): Zoom level. Defaults to 18.
+        from_center (bool, optional): If set to True, function expects that the input coordinates
+            are the center of the image. Defaults to False.
         logger (Logger, optional): Logger object.
 
     Returns:
@@ -196,8 +200,11 @@ def save_image(
     if logger is None:
         logger = Logger()
 
-    lons, lats = calc(top_left_lon, top_left_lat, rotation, size)
-    logger.info("Boundary coordinates: %s %s", lons, lats)
+    if from_center:
+        lat, lon = top_left_from_center(lat, lon, size, rotation)
+
+    lats, lons = calc(lat, lon, rotation, size)
+    logger.info("Boundary coordinates: %s %s", lats, lons)
 
     download_tiles(max(lats), min(lats), min(lons), max(lons), zoom, logger)
     logger.info("Satellite tiles downloaded, starting to merge...")
