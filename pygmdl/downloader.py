@@ -10,7 +10,7 @@ from math import cos, sin
 
 from PIL import Image
 
-from pygmdl.config import HEADERS, ROAD_URL, SAT_URL, TILES_DIRECTORY, Logger
+from pygmdl.config import HEADERS, SAT_URL, TILES_DIRECTORY, Logger
 from pygmdl.converter import calc
 from pygmdl.gmapper import latlon2xy
 
@@ -22,7 +22,6 @@ def download_tile(
     y: int,
     zoom: int,
     logger: Logger,
-    satellite: bool = True,
 ) -> None:
     """Download an individual tile for a given x, y, and zoom level.
 
@@ -31,14 +30,9 @@ def download_tile(
         y (int): Y coordinate of the tile.
         zoom (int): Zoom level of the tile.
         logger (Logger): Logger object.
-        satellite (bool, optional): Whether to download satellite or roadmap tiles.
     """
-    if satellite:
-        url = SAT_URL % (x, y, zoom)
-        tile_name = f"{zoom}_{x}_{y}_s.png"
-    else:
-        url = ROAD_URL % (x, y, zoom)
-        tile_name = f"{zoom}_{x}_{y}_r.png"
+    url = SAT_URL % (x, y, zoom)
+    tile_name = f"{zoom}_{x}_{y}_s.png"
 
     tile_path = os.path.join(TILES_DIRECTORY, tile_name)
 
@@ -69,7 +63,6 @@ def download_tiles(
     lon_stop: float,
     zoom: int,
     logger: Logger,
-    satellite: bool = True,
 ) -> None:
     """Download tiles for a given boundary.
 
@@ -80,7 +73,6 @@ def download_tiles(
         lon_stop (float): Longitude of the bottom-right corner.
         zoom (int): Zoom level.
         logger (Logger): Logger object.
-        satellite (bool): Whether to download satellite or roadmap tiles.
     """
     start_x, start_y, _, _ = latlon2xy(zoom, lat_start, lon_start)
     stop_x, stop_y, _, _ = latlon2xy(zoom, lat_stop, lon_stop)
@@ -91,7 +83,7 @@ def download_tiles(
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         for x in range(start_x, stop_x + 1):
             for y in range(start_y, stop_y + 1):
-                executor.submit(download_tile, x, y, zoom, logger, satellite)
+                executor.submit(download_tile, x, y, zoom, logger)
 
 
 # pylint: disable=R0914, R0917, R0913
@@ -104,7 +96,6 @@ def merge_tiles(
     output: str,
     zoom: int,
     logger: Logger,
-    satellite=True,
 ):
     """Merge downloaded tiles into a single image.
 
@@ -117,12 +108,8 @@ def merge_tiles(
         output (str): Output path.
         zoom (int): Zoom level.
         logger (Logger): Logger object.
-        satellite (bool): Whether to merge satellite or roadmap tiles.
     """
-
-    tile_type, ext = "r", "png"
-    if satellite:
-        tile_type, ext = "s", "png"
+    tile_type, ext = "s", "png"
 
     x_start, y_start, remain_x_start, remain_y_start = latlon2xy(zoom, lat_start, lon_start)
     x_stop, y_stop, remain_x_stop, remain_y_stop = latlon2xy(zoom, lat_stop, lon_stop)
@@ -188,8 +175,8 @@ def save_image(
     top_left_lon: float,
     rotation: int,
     size: int,
-    zoom: int,
     output_path: str,
+    zoom: int = 18,
     logger: Logger | None = None,
 ) -> str:
     """Save an image from a given top-left corner, rotation, size, and zoom level.
@@ -199,8 +186,8 @@ def save_image(
         top_left_lon (float): Longitude of the top-left corner.
         rotation (int): Rotation of the image.
         size (int): Size of the image.
-        zoom (int): Zoom level.
         output_path {str}: Output path.
+        zoom (int, optional): Zoom level. Defaults to 18.
         logger (Logger, optional): Logger object.
 
     Returns:
@@ -212,7 +199,7 @@ def save_image(
     lons, lats = calc(top_left_lon, top_left_lat, rotation, size)
     logger.info("Boundary coordinates: %s %s", lons, lats)
 
-    download_tiles(max(lats), min(lats), min(lons), max(lons), zoom, logger, satellite=True)
+    download_tiles(max(lats), min(lats), min(lons), max(lons), zoom, logger)
     logger.info("Satellite tiles downloaded, starting to merge...")
 
     merge_tiles(
@@ -224,7 +211,6 @@ def save_image(
         output_path,
         zoom,
         logger,
-        satellite=True,
     )
     logger.info("Image merged successfully to %s", output_path)
     return output_path

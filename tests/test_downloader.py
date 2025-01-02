@@ -18,7 +18,7 @@ def test_save_image():
 
         lat, lon = coordinate_case
 
-        pygmdl.save_image(lat, lon, rotation, size, zoom, output_filename)
+        pygmdl.save_image(lat, lon, rotation, size, output_filename, zoom=zoom)
 
         assert os.path.isfile(output_filename), "Can't find the output file."
 

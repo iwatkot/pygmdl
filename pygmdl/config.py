@@ -22,7 +22,7 @@ class Logger(logging.Logger):
 
     def __init__(
         self,
-        level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "WARNING",
+        level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "DEBUG",
     ):
         super().__init__("pygmdl")
         self.setLevel(level)
