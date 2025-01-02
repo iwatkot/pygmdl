@@ -3,3 +3,4 @@
 logs/
 temp/
 tests/dev.py
+__pycache__/
