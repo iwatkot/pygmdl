@@ -1,9 +1,5 @@
-*.jpg
-*.png
-old/
-tiles/
-build/
-dist/
-.vscode/
-.ipynb_checkpoints/
-__pycache__/
+.mypy_cache/
+.venv/
+logs/
+temp/
+tests/dev.py
