@@ -3,3 +3,4 @@ pyproj
 pylint
 mypy
 pytest
+pytest-cov
