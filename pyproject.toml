@@ -20,6 +20,7 @@ dependencies = [
     "Pillow",
     "pyproj",
     "geopy",
+    "tqdm",
 ]
 
 [project.urls]

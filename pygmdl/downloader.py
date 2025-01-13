@@ -9,6 +9,7 @@ import urllib.request
 from math import cos, sin
 
 from PIL import Image
+from tqdm import tqdm
 
 from pygmdl.config import HEADERS, SAT_URL, TILES_DIRECTORY, Logger
 from pygmdl.converter import calc, top_left_from_center
@@ -22,6 +23,7 @@ def download_tile(
     y: int,
     zoom: int,
     logger: Logger,
+    pbar: tqdm,
 ) -> None:
     """Download an individual tile for a given x, y, and zoom level.
 
@@ -30,6 +32,7 @@ def download_tile(
         y (int): Y coordinate of the tile.
         zoom (int): Zoom level of the tile.
         logger (Logger): Logger object.
+        pbar (tqdm): Progress bar object.
     """
     url = SAT_URL % (x, y, zoom)
     tile_name = f"{zoom}_{x}_{y}_s.png"
@@ -53,6 +56,8 @@ def download_tile(
             f.write(data)
 
         time.sleep(random.random())
+
+    pbar.update(1)
 
 
 # pylint: disable=R0913, R0917
@@ -80,10 +85,11 @@ def download_tiles(
 
     logger.info("Starting to download %s tiles...", number_of_tiles)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        for x in range(start_x, stop_x + 1):
-            for y in range(start_y, stop_y + 1):
-                executor.submit(download_tile, x, y, zoom, logger)
+    with tqdm(total=number_of_tiles, desc="Downloading tiles", unit="tiles") as pbar:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            for x in range(start_x, stop_x + 1):
+                for y in range(start_y, stop_y + 1):
+                    executor.submit(download_tile, x, y, zoom, logger, pbar)
 
 
 # pylint: disable=R0914, R0917, R0913
@@ -119,29 +125,34 @@ def merge_tiles(
 
     result = Image.new("RGB", (w, h))
 
-    for x in range(x_start, x_stop + 1):
-        for y in range(y_start, y_stop + 1):
-            tile_name = f"{zoom}_{x}_{y}_{tile_type}.{ext}"
-            tile_path = os.path.join(TILES_DIRECTORY, tile_name)
+    number_of_tiles = (y_stop - y_start + 1) * (x_stop - x_start + 1)
 
-            if not os.path.exists(tile_path):
-                logger.warning(f"Tile {tile_path} not found, skipping...")
-                continue
+    with tqdm(total=number_of_tiles, desc="Merging tiles", unit="tiles") as pbar:
+        for x in range(x_start, x_stop + 1):
+            for y in range(y_start, y_stop + 1):
+                tile_name = f"{zoom}_{x}_{y}_{tile_type}.{ext}"
+                tile_path = os.path.join(TILES_DIRECTORY, tile_name)
 
-            x_paste = (x - x_start) * 256
-            y_paste = h - (y_stop + 1 - y) * 256
+                if not os.path.exists(tile_path):
+                    logger.warning(f"Tile {tile_path} not found, skipping...")
+                    continue
 
-            try:
-                image = Image.open(tile_path)
-            except Exception as e:  # pylint: disable=W0718
-                logger.error(f"Error opening {tile_path}: {e}")
+                x_paste = (x - x_start) * 256
+                y_paste = h - (y_stop + 1 - y) * 256
+
                 try:
-                    os.remove(tile_path)
-                except Exception:  # pylint: disable=W0718
-                    pass
-                continue
+                    image = Image.open(tile_path)
+                except Exception as e:  # pylint: disable=W0718
+                    logger.error(f"Error opening {tile_path}: {e}")
+                    try:
+                        os.remove(tile_path)
+                    except Exception:  # pylint: disable=W0718
+                        pass
+                    continue
 
-            result.paste(image, (x_paste, y_paste))
+                result.paste(image, (x_paste, y_paste))
+
+                pbar.update(1)
 
     cropped = result.crop(
         (remain_x_start, remain_y_start, w - (256 - remain_x_stop), h - (256 - remain_y_stop))
