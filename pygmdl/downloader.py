@@ -60,7 +60,7 @@ def download_tile(
     pbar.update(1)
 
 
-# pylint: disable=R0913, R0917
+# pylint: disable=R0913, R0917, R0914
 def download_tiles(
     lat_start: float,
     lat_stop: float,
