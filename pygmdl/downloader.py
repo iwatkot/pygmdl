@@ -83,7 +83,7 @@ def download_tiles(
     stop_x, stop_y, _, _ = latlon2xy(zoom, lat_stop, lon_stop)
     number_of_tiles = (stop_y - start_y + 1) * (stop_x - start_x + 1)
 
-    logger.info("Starting to download %s tiles...", number_of_tiles)
+    logger.debug("Starting to download %s tiles...", number_of_tiles)
 
     with tqdm(total=number_of_tiles, desc="Downloading tiles", unit="tiles") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -174,10 +174,10 @@ def merge_tiles(
         (int(min(cropped2.width, cropped2.height)), int(min(cropped2.width, cropped2.height)))
     )
 
-    logger.info("Shape of the image: %s", cropped2.size)
+    logger.debug("Shape of the image: %s", cropped2.size)
 
     cropped2.save(output)
-    logger.info("Saved image as %s", output)
+    logger.debug("Saved image as %s", output)
 
 
 def save_image(
@@ -215,10 +215,10 @@ def save_image(
         lat, lon = top_left_from_center(lat, lon, size, rotation)
 
     lats, lons = calc(lat, lon, rotation, size)
-    logger.info("Boundary coordinates: %s %s", lats, lons)
+    logger.debug("Boundary coordinates: %s %s", lats, lons)
 
     download_tiles(max(lats), min(lats), min(lons), max(lons), zoom, logger)
-    logger.info("Satellite tiles downloaded, starting to merge...")
+    logger.debug("Satellite tiles downloaded, starting to merge...")
 
     merge_tiles(
         max(lats),
@@ -230,5 +230,5 @@ def save_image(
         zoom,
         logger,
     )
-    logger.info("Image merged successfully to %s", output_path)
+    logger.debug("Image merged successfully to %s", output_path)
     return output_path
