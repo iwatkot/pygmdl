@@ -68,6 +68,7 @@ def download_tiles(
     lon_stop: float,
     zoom: int,
     logger: Logger,
+    show_progress: bool = True,
 ) -> None:
     """Download tiles for a given boundary.
 
@@ -78,6 +79,8 @@ def download_tiles(
         lon_stop (float): Longitude of the bottom-right corner.
         zoom (int): Zoom level.
         logger (Logger): Logger object.
+        show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
+            to True.
     """
     start_x, start_y, _, _ = latlon2xy(zoom, lat_start, lon_start)
     stop_x, stop_y, _, _ = latlon2xy(zoom, lat_stop, lon_stop)
@@ -85,7 +88,9 @@ def download_tiles(
 
     logger.debug("Starting to download %s tiles...", number_of_tiles)
 
-    with tqdm(total=number_of_tiles, desc="Downloading tiles", unit="tiles") as pbar:
+    with tqdm(
+        total=number_of_tiles, desc="Downloading tiles", unit="tiles", disable=not show_progress
+    ) as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             for x in range(start_x, stop_x + 1):
                 for y in range(start_y, stop_y + 1):
@@ -102,6 +107,7 @@ def merge_tiles(
     output: str,
     zoom: int,
     logger: Logger,
+    show_progress: bool = True,
 ):
     """Merge downloaded tiles into a single image.
 
@@ -114,6 +120,8 @@ def merge_tiles(
         output (str): Output path.
         zoom (int): Zoom level.
         logger (Logger): Logger object.
+        show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
+            to True.
     """
     tile_type, ext = "s", "png"
 
@@ -127,7 +135,9 @@ def merge_tiles(
 
     number_of_tiles = (y_stop - y_start + 1) * (x_stop - x_start + 1)
 
-    with tqdm(total=number_of_tiles, desc="Merging tiles", unit="tiles") as pbar:
+    with tqdm(
+        total=number_of_tiles, desc="Merging tiles", unit="tiles", disable=not show_progress
+    ) as pbar:
         for x in range(x_start, x_stop + 1):
             for y in range(y_start, y_stop + 1):
                 tile_name = f"{zoom}_{x}_{y}_{tile_type}.{ext}"
@@ -189,6 +199,7 @@ def save_image(
     zoom: int = 18,
     from_center: bool = False,
     logger: Logger | None = None,
+    show_progress: bool = True,
 ) -> str:
     """Save an image from a given coordinates, size, and rotation.
     By default function expects that the input coordinates are the top-left corner of the image.
@@ -204,6 +215,8 @@ def save_image(
         from_center (bool, optional): If set to True, function expects that the input coordinates
             are the center of the image. Defaults to False.
         logger (Logger, optional): Logger object.
+        show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
+            to True.
 
     Returns:
         str: Output path.
@@ -217,7 +230,9 @@ def save_image(
     lats, lons = calc(lat, lon, rotation, size)
     logger.debug("Boundary coordinates: %s %s", lats, lons)
 
-    download_tiles(max(lats), min(lats), min(lons), max(lons), zoom, logger)
+    download_tiles(
+        max(lats), min(lats), min(lons), max(lons), zoom, logger, show_progress=show_progress
+    )
     logger.debug("Satellite tiles downloaded, starting to merge...")
 
     merge_tiles(
@@ -229,6 +244,7 @@ def save_image(
         output_path,
         zoom,
         logger,
+        show_progress=show_progress,
     )
     logger.debug("Image merged successfully to %s", output_path)
     return output_path
