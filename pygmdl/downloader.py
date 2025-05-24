@@ -1,12 +1,10 @@
 """This module contains functions to download and merge tiles from Google Maps."""
 
 import concurrent.futures
-import math
 import os
 import random
 import time
 import urllib.request
-from math import cos, sin
 
 from PIL import Image
 from tqdm import tqdm
@@ -167,22 +165,46 @@ def merge_tiles(
     cropped = result.crop(
         (remain_x_start, remain_y_start, w - (256 - remain_x_stop), h - (256 - remain_y_stop))
     )
-    rotated = cropped.rotate(rotation, expand=False)
-    new_width = 1 * cos(math.radians(abs(rotation))) + 1 * sin(math.radians(abs(rotation)))
+    # Use expand=True to keep the whole rotated image
+    rotated = cropped.rotate(rotation, expand=True)
 
-    ratio = 1 / new_width
+    # Compute the largest rectangle (with original aspect ratio) that fits inside the rotated image, avoiding black corners
+    import math
 
-    box = (
-        int((rotated.width - ratio * rotated.width) / 2),
-        int((rotated.height - ratio * rotated.height) / 2),
-        int(rotated.width - (rotated.width - ratio * rotated.width) / 2),
-        int(rotated.height - (rotated.height - ratio * rotated.height) / 2),
-    )
+    orig_w, orig_h = cropped.size
 
-    cropped2 = rotated.crop(box)
-    cropped2 = cropped2.resize(
-        (int(min(cropped2.width, cropped2.height)), int(min(cropped2.width, cropped2.height)))
-    )
+    def largest_rotated_rect(w, h, angle):
+        """Compute the size of the largest rectangle that fits inside the rotated rectangle."""
+        angle = abs(angle) % 180
+        if angle > 90:
+            angle = 180 - angle
+        angle = math.radians(angle)
+        if w <= 0 or h <= 0:
+            return 0, 0
+        # This formula guarantees the largest rectangle inside the rotated rectangle
+        if w < h:
+            w, h = h, w
+        if angle == 0:
+            return int(w), int(h)
+        sin_a = abs(math.sin(angle))
+        cos_a = abs(math.cos(angle))
+        if h <= 2.0 * sin_a * cos_a * w:
+            x = 0.5 * h
+            wr = x / sin_a
+            hr = x / cos_a
+        else:
+            cos_2a = cos_a * cos_a - sin_a * sin_a
+            wr = (w * cos_a - h * sin_a) / cos_2a
+            hr = (h * cos_a - w * sin_a) / cos_2a
+        return int(abs(wr)), int(abs(hr))
+
+    crop_w, crop_h = largest_rotated_rect(orig_w, orig_h, rotation)
+    rotated_w, rotated_h = rotated.size
+    left = (rotated_w - crop_w) // 2
+    top = (rotated_h - crop_h) // 2
+    right = left + crop_w
+    bottom = top + crop_h
+    cropped2 = rotated.crop((left, top, right, bottom))
 
     logger.debug("Shape of the image: %s", cropped2.size)
 
