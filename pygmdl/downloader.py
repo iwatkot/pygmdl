@@ -236,8 +236,11 @@ def save_image(
     Returns:
         str: Output path.
     """
-    if not (-90 <= rotation <= 90):
-        raise ValueError("Rotation must be between -90 and 90 degrees.")
+    if not -90 <= rotation <= 90:
+        raise ValueError(
+            "Satellite image download failed: the rotation must be between -90 and 90 degrees, "
+            f"got {rotation} degrees."
+        )
 
     if logger is None:
         logger = Logger()
