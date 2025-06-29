@@ -214,6 +214,8 @@ def save_image(
     """Save an image from a given coordinates, size, and rotation.
     By default function expects that the input coordinates are the top-left corner of the image.
     If you need to provide the center of the image, set from_center to True.
+    Rotation value is in degrees, minimum value is -90 and maximum value is 90. If the angle
+    does not fit into this range, an error will be raised.
 
     Arguments:
         lat (float): Latitude of the top-left corner.
@@ -228,9 +230,15 @@ def save_image(
         show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
             to True.
 
+    Raises:
+        ValueError: If rotation is not between -90 and 90 degrees.
+
     Returns:
         str: Output path.
     """
+    if not (-90 <= rotation <= 90):
+        raise ValueError("Rotation must be between -90 and 90 degrees.")
+
     if logger is None:
         logger = Logger()
 
