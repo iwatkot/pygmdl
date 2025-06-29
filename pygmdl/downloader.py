@@ -16,7 +16,7 @@ from pygmdl.converter import calc, top_left_from_center
 from pygmdl.gmapper import latlon2xy
 
 Image.MAX_IMAGE_PIXELS = None
-cpu_count = os.os.cpu_count()
+cpu_count = os.cpu_count()
 MAX_WORKERS = cpu_count * 4 if cpu_count else 4
 
 
