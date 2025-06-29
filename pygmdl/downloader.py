@@ -16,6 +16,7 @@ from pygmdl.converter import calc, top_left_from_center
 from pygmdl.gmapper import latlon2xy
 
 Image.MAX_IMAGE_PIXELS = None
+MAX_WORKERS = os.cpu_count() * 4
 
 
 def download_tile(
@@ -91,7 +92,7 @@ def download_tiles(
     with tqdm(
         total=number_of_tiles, desc="Downloading tiles", unit="tiles", disable=not show_progress
     ) as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             for x in range(start_x, stop_x + 1):
                 for y in range(start_y, stop_y + 1):
                     executor.submit(download_tile, x, y, zoom, logger, pbar)
