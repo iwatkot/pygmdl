@@ -21,6 +21,7 @@ dependencies = [
     "pyproj",
     "geopy",
     "tqdm",
+    "requests",
 ]
 
 [project.urls]
