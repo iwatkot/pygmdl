@@ -17,7 +17,7 @@ from pygmdl.gmapper import latlon2xy
 
 Image.MAX_IMAGE_PIXELS = None
 cpu_count = os.cpu_count()
-MAX_WORKERS = cpu_count * 4 if cpu_count else 4
+MAX_WORKERS = min(cpu_count * 4, 32) if cpu_count else 4
 
 
 def download_tile(
