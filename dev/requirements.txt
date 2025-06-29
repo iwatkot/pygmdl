@@ -7,3 +7,5 @@ pytest-cov
 geopy
 tqdm
 types-tqdm
+requests
+types-requests

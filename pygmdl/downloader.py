@@ -5,10 +5,11 @@ import math
 import os
 import random
 import time
-import urllib.request
 from math import cos, sin
 
+import requests
 from PIL import Image
+from requests import Session
 from tqdm import tqdm
 
 from pygmdl.config import HEADERS, SAT_URL, TILES_DIRECTORY, Logger
@@ -16,14 +17,18 @@ from pygmdl.converter import calc, top_left_from_center
 from pygmdl.gmapper import latlon2xy
 
 Image.MAX_IMAGE_PIXELS = None
+cpu_count = os.cpu_count()
+MAX_WORKERS = min(cpu_count * 4, 64) if cpu_count else 4
 
 
+# pylint: disable=R0913, R0917
 def download_tile(
     x: int,
     y: int,
     zoom: int,
     logger: Logger,
     pbar: tqdm,
+    session: Session | None = None,
 ) -> None:
     """Download an individual tile for a given x, y, and zoom level.
 
@@ -33,6 +38,7 @@ def download_tile(
         zoom (int): Zoom level of the tile.
         logger (Logger): Logger object.
         pbar (tqdm): Progress bar object.
+        session (Session, optional): Requests session object. Defaults to None.
     """
     url = SAT_URL % (x, y, zoom)
     tile_name = f"{zoom}_{x}_{y}_s.png"
@@ -41,9 +47,12 @@ def download_tile(
 
     if not os.path.exists(tile_path):
         try:
-            req = urllib.request.Request(url, data=None, headers=HEADERS)
-            response = urllib.request.urlopen(req)  # pylint: disable=R1732
-            data = response.read()
+            if session is None:
+                session = requests.Session()
+
+            response = session.get(url, headers=HEADERS)
+            response.raise_for_status()
+            data = response.content
         except Exception as e:
             logger.error(f"Error downloading {tile_path}: {e}")
             raise RuntimeError(f"Error downloading {tile_path}: {e}")  # pylint: disable=W0707
@@ -91,10 +100,11 @@ def download_tiles(
     with tqdm(
         total=number_of_tiles, desc="Downloading tiles", unit="tiles", disable=not show_progress
     ) as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            for x in range(start_x, stop_x + 1):
-                for y in range(start_y, stop_y + 1):
-                    executor.submit(download_tile, x, y, zoom, logger, pbar)
+        with requests.Session() as session:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                for x in range(start_x, stop_x + 1):
+                    for y in range(start_y, stop_y + 1):
+                        executor.submit(download_tile, x, y, zoom, logger, pbar, session)
 
 
 # pylint: disable=R0914, R0917, R0913
