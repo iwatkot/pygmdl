@@ -21,6 +21,7 @@ cpu_count = os.cpu_count()
 MAX_WORKERS = min(cpu_count * 4, 64) if cpu_count else 4
 
 
+# pylint: disable=R0913, R0917
 def download_tile(
     x: int,
     y: int,
