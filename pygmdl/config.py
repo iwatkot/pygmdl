@@ -14,7 +14,6 @@ HEADERS = {"User-Agent": USER_AGENT}
 SAT_URL = "https://mt0.google.com/vt/lyrs=s&hl=en&x=%d&y=%d&z=%d&s=Ga"
 ROAD_URL = "http://mt1.google.com/vt/lyrs=h@162000000&hl=en&x=%d&s=&y=%d&z=%d"
 TILES_DIRECTORY = os.path.join(os.getcwd(), "temp", "tiles")
-os.makedirs(TILES_DIRECTORY, exist_ok=True)
 
 
 class Logger(logging.Logger):
