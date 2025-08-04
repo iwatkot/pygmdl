@@ -22,11 +22,10 @@
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/iwatkot/pygmdl)](https://github.com/iwatkot/pygmdl/releases)
 [![PyPI - Version](https://img.shields.io/pypi/v/pygmdl)](https://pypi.org/project/pygmdl)
 [![GitHub issues](https://img.shields.io/github/issues/iwatkot/pygmdl)](https://github.com/iwatkot/pygmdl/issues)
-[![Maintainability](https://api.codeclimate.com/v1/badges/373eb79586deebf5c264/maintainability)](https://codeclimate.com/github/iwatkot/pygmdl/maintainability)<br>
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/pygmdl)](https://pypi.org/project/pygmdl)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![Build Status](https://github.com/iwatkot/pygmdl/actions/workflows/checks.yml/badge.svg)](https://github.com/iwatkot/pygmdl/actions)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/373eb79586deebf5c264/test_coverage)](https://codeclimate.com/github/iwatkot/pygmdl/test_coverage)
+[![codecov](https://codecov.io/gh/iwatkot/pygmdl/graph/badge.svg?token=G3XH8GNTIN)](https://codecov.io/gh/iwatkot/pygmdl)
 [![GitHub Repo stars](https://img.shields.io/github/stars/iwatkot/pygmdl)](https://github.com/iwatkot/pygmdl/stargazers)<br>
 
 </div>
