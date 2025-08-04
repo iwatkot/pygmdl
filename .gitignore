@@ -4,3 +4,5 @@ logs/
 temp/
 tests/dev.py
 __pycache__/
+output.png
+temp_directory/

@@ -29,6 +29,7 @@ def download_tile(
     logger: Logger,
     pbar: tqdm,
     session: Session | None = None,
+    tiles_dir: str = TILES_DIRECTORY,
 ) -> None:
     """Download an individual tile for a given x, y, and zoom level.
 
@@ -43,7 +44,7 @@ def download_tile(
     url = SAT_URL % (x, y, zoom)
     tile_name = f"{zoom}_{x}_{y}_s.png"
 
-    tile_path = os.path.join(TILES_DIRECTORY, tile_name)
+    tile_path = os.path.join(tiles_dir, tile_name)
 
     if not os.path.exists(tile_path):
         try:
@@ -78,6 +79,7 @@ def download_tiles(
     zoom: int,
     logger: Logger,
     show_progress: bool = True,
+    tiles_dir: str = TILES_DIRECTORY,
 ) -> None:
     """Download tiles for a given boundary.
 
@@ -90,6 +92,7 @@ def download_tiles(
         logger (Logger): Logger object.
         show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
             to True.
+        tiles_dir (str, optional): Directory to save downloaded tiles. Defaults to TILES_DIRECTORY.
     """
     start_x, start_y, _, _ = latlon2xy(zoom, lat_start, lon_start)
     stop_x, stop_y, _, _ = latlon2xy(zoom, lat_stop, lon_stop)
@@ -104,7 +107,9 @@ def download_tiles(
             with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 for x in range(start_x, stop_x + 1):
                     for y in range(start_y, stop_y + 1):
-                        executor.submit(download_tile, x, y, zoom, logger, pbar, session)
+                        executor.submit(
+                            download_tile, x, y, zoom, logger, pbar, session, tiles_dir=tiles_dir
+                        )
 
 
 # pylint: disable=R0914, R0917, R0913
@@ -118,6 +123,7 @@ def merge_tiles(
     zoom: int,
     logger: Logger,
     show_progress: bool = True,
+    tiles_dir: str = TILES_DIRECTORY,
 ):
     """Merge downloaded tiles into a single image.
 
@@ -132,6 +138,7 @@ def merge_tiles(
         logger (Logger): Logger object.
         show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
             to True.
+        tiles_dir (str, optional): Directory to save downloaded tiles. Defaults to TILES_DIRECTORY.
     """
     tile_type, ext = "s", "png"
 
@@ -151,7 +158,7 @@ def merge_tiles(
         for x in range(x_start, x_stop + 1):
             for y in range(y_start, y_stop + 1):
                 tile_name = f"{zoom}_{x}_{y}_{tile_type}.{ext}"
-                tile_path = os.path.join(TILES_DIRECTORY, tile_name)
+                tile_path = os.path.join(tiles_dir, tile_name)
 
                 if not os.path.exists(tile_path):
                     logger.warning(f"Tile {tile_path} not found, skipping...")
@@ -210,6 +217,7 @@ def save_image(
     from_center: bool = False,
     logger: Logger | None = None,
     show_progress: bool = True,
+    tiles_dir: str = TILES_DIRECTORY,
 ) -> str:
     """Save an image from a given coordinates, size, and rotation.
     By default function expects that the input coordinates are the top-left corner of the image.
@@ -229,6 +237,7 @@ def save_image(
         logger (Logger, optional): Logger object.
         show_progress (bool, optional): If set to True, progress bars will be shown. Defaults
             to True.
+        tiles_dir (str, optional): Directory to save downloaded tiles. Defaults to TILES_DIRECTORY.
 
     Raises:
         ValueError: If rotation is not between -90 and 90 degrees.
@@ -251,8 +260,17 @@ def save_image(
     lats, lons = calc(lat, lon, rotation, size)
     logger.debug("Boundary coordinates: %s %s", lats, lons)
 
+    os.makedirs(tiles_dir, exist_ok=True)
+
     download_tiles(
-        max(lats), min(lats), min(lons), max(lons), zoom, logger, show_progress=show_progress
+        max(lats),
+        min(lats),
+        min(lons),
+        max(lons),
+        zoom,
+        logger,
+        show_progress=show_progress,
+        tiles_dir=tiles_dir,
     )
     logger.debug("Satellite tiles downloaded, starting to merge...")
 
@@ -266,6 +284,7 @@ def save_image(
         zoom,
         logger,
         show_progress=show_progress,
+        tiles_dir=tiles_dir,
     )
     logger.debug("Image merged successfully to %s", output_path)
     return output_path
