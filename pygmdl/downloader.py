@@ -3,8 +3,6 @@
 import concurrent.futures
 import math
 import os
-import random
-import time
 from math import cos, sin
 
 import requests
@@ -30,6 +28,7 @@ def download_tile(
     pbar: tqdm,
     session: Session | None = None,
     tiles_dir: str = TILES_DIRECTORY,
+    retries: int = 5,
 ) -> None:
     """Download an individual tile for a given x, y, and zoom level.
 
@@ -40,6 +39,8 @@ def download_tile(
         logger (Logger): Logger object.
         pbar (tqdm): Progress bar object.
         session (Session, optional): Requests session object. Defaults to None.
+        tiles_dir (str, optional): Directory to save downloaded tiles. Defaults to TILES_DIRECTORY.
+        retries (int, optional): Number of retries for downloading the tile. Defaults to 5.
     """
     url = SAT_URL % (x, y, zoom)
     tile_name = f"{zoom}_{x}_{y}_s.png"
@@ -55,8 +56,15 @@ def download_tile(
             response.raise_for_status()
             data = response.content
         except Exception as e:
+            if retries > 0:
+                logger.warning(
+                    f"Can not download tile {tile_name}. Error: {repr(e)}. {retries} retries left."
+                )
+                return download_tile(
+                    x, y, zoom, logger, pbar, session, tiles_dir=tiles_dir, retries=retries - 1
+                )
             logger.error(f"Error downloading {tile_path}: {e}")
-            raise RuntimeError(f"Error downloading {tile_path}: {e}")  # pylint: disable=W0707
+            raise RuntimeError(f"Error downloading {tile_path}") from e
 
         if data.startswith(b"<html>"):
             logger.error(f"Error downloading {tile_path}: Forbidden")
@@ -64,8 +72,6 @@ def download_tile(
 
         with open(tile_path, "wb") as f:
             f.write(data)
-
-        time.sleep(random.random())
 
     pbar.update(1)
 
