@@ -7,7 +7,7 @@ name = "pygmdl"
 version = "1.0.0"
 description = "Download satellite images from Google Maps."
 authors = [{name = "iwatkot", email = "iwatkot@gmail.com"}]
-license = {text = "MIT License"}
+license = {text = "GNU Affero General Public License v3"}
 readme = "README.md"
 keywords = ["googlemaps", "satellite", "images", "download"]
 classifiers = [
